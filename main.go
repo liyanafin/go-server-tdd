@@ -25,24 +25,41 @@ func formHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := r.FormValue("name")
-	address := r.FormValue("address")
+	email := r.FormValue("email")
+	subject := r.FormValue("subject")
+	message := r.FormValue("message")
 	if name == "" {
-		http.Error(w, "Missing name", http.StatusBadRequest)
+		http.Redirect(w, r, "/?error=Missing+name", http.StatusSeeOther)
 		return
 	}
-	if address == "" {
-		http.Error(w, "Missing address", http.StatusBadRequest)
+	if email == "" {
+		http.Redirect(w, r, "/?error=Missing+email", http.StatusSeeOther)
 		return
 	}
-	// Show a simple thank you message, then redirect to home
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	if subject == "" {
+		http.Redirect(w, r, "/?error=Missing+subject", http.StatusSeeOther)
+		return
+	}
+	if message == "" {
+		http.Redirect(w, r, "/?error=Missing+message", http.StatusSeeOther)
+		return
+	}
+	// Redirect to home with status message
+	http.Redirect(w, r, "/?status=success", http.StatusSeeOther)
 }
 func main() {
 	mux := http.NewServeMux()
-	fileserver := http.FileServer(http.Dir("./public"))
-	mux.Handle("/", fileserver)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		status := r.URL.Query().Get("status")
+		if status == "success" {
+			// Read index.html and inject status message
+			http.ServeFile(w, r, "public/index.html")
+		} else {
+			http.ServeFile(w, r, "public/index.html")
+		}
+	})
 	mux.HandleFunc("/form", formHandle)
-	mux.HandleFunc("/hello", defaultHandle)
+	mux.HandleFunc("/contact", defaultHandle)
 
 	// Logging middleware for all requests
 	logRequests := func(h http.Handler) http.Handler {

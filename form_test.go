@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -12,7 +11,9 @@ import (
 func TestFormHandler_ValidSubmission(t *testing.T) {
 	form := url.Values{}
 	form.Add("name", "John Doe")
-	form.Add("address", "123 Main St")
+	form.Add("email", "john@example.com")
+	form.Add("subject", "Test Subject")
+	form.Add("message", "This is a test message.")
 	req := httptest.NewRequest("POST", "/form", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
@@ -21,28 +22,90 @@ func TestFormHandler_ValidSubmission(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		t.Errorf("expected status 200 OK, got %d", res.StatusCode)
+	if res.StatusCode != http.StatusSeeOther {
+		t.Errorf("expected status 303 See Other, got %d", res.StatusCode)
 	}
-	body, _ := io.ReadAll(res.Body)
-	if !strings.Contains(string(body), "Thank you") {
-		t.Errorf("expected response to contain 'Thank you', got %s", string(body))
+	location := res.Header.Get("Location")
+	if !strings.Contains(location, "status=success") {
+		t.Errorf("expected redirect to contain status=success, got %s", location)
 	}
 }
 
-func TestFormHandler_MissingName(t *testing.T) {
+func TestFormHandler_MissingFields(t *testing.T) {
+	// Missing name
 	form := url.Values{}
-	form.Add("address", "123 Main St")
+	form.Add("email", "john@example.com")
+	form.Add("subject", "Test Subject")
+	form.Add("message", "This is a test message.")
 	req := httptest.NewRequest("POST", "/form", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
-
 	formHandle(w, req)
-
 	res := w.Result()
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusBadRequest {
-		t.Errorf("expected status 400 Bad Request, got %d", res.StatusCode)
+	if res.StatusCode != http.StatusSeeOther {
+		t.Errorf("expected status 303 See Other for missing name, got %d", res.StatusCode)
+	}
+	location := res.Header.Get("Location")
+	if !strings.Contains(location, "error=Missing+name") {
+		t.Errorf("expected redirect to contain error=Missing+name, got %s", location)
+	}
+
+	// Missing email
+	form = url.Values{}
+	form.Add("name", "John Doe")
+	form.Add("subject", "Test Subject")
+	form.Add("message", "This is a test message.")
+	req = httptest.NewRequest("POST", "/form", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w = httptest.NewRecorder()
+	formHandle(w, req)
+	res = w.Result()
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusSeeOther {
+		t.Errorf("expected status 303 See Other for missing email, got %d", res.StatusCode)
+	}
+	location = res.Header.Get("Location")
+	if !strings.Contains(location, "error=Missing+email") {
+		t.Errorf("expected redirect to contain error=Missing+email, got %s", location)
+	}
+
+	// Missing subject
+	form = url.Values{}
+	form.Add("name", "John Doe")
+	form.Add("email", "john@example.com")
+	form.Add("message", "This is a test message.")
+	req = httptest.NewRequest("POST", "/form", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w = httptest.NewRecorder()
+	formHandle(w, req)
+	res = w.Result()
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusSeeOther {
+		t.Errorf("expected status 303 See Other for missing subject, got %d", res.StatusCode)
+	}
+	location = res.Header.Get("Location")
+	if !strings.Contains(location, "error=Missing+subject") {
+		t.Errorf("expected redirect to contain error=Missing+subject, got %s", location)
+	}
+
+	// Missing message
+	form = url.Values{}
+	form.Add("name", "John Doe")
+	form.Add("email", "john@example.com")
+	form.Add("subject", "Test Subject")
+	req = httptest.NewRequest("POST", "/form", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w = httptest.NewRecorder()
+	formHandle(w, req)
+	res = w.Result()
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusSeeOther {
+		t.Errorf("expected status 303 See Other for missing message, got %d", res.StatusCode)
+	}
+	location = res.Header.Get("Location")
+	if !strings.Contains(location, "error=Missing+message") {
+		t.Errorf("expected redirect to contain error=Missing+message, got %s", location)
 	}
 }
 

@@ -14,13 +14,22 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to the Go Server Example</h1>
+        <div id="status-message"></div>
+        <h1>Welcome to the Go Lang Server</h1>
         <p>This is a simple Go web server project demonstrating static file serving and form handling with TDD.</p>
         <ul>
-            <li>View and submit the <a href="/hello">form</a></li>
-            <li>Source code and documentation available in the project repository</li>
+            <li>View and submit the <a href="/contact">contact</a></li>
+            <li>Source code and documentation available in the project repository.<a href="https://github.com/liyanafin/go-server-tdd">Go-Server-TDD Server</a></li>
         </ul>
-        <a class="button" href="/hello">Go to Form</a>
+        <a class="button" href="/contact">Contact Us</a>
     </div>
+    <script>
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('status') === 'success') {
+                document.getElementById('status-message').innerHTML = '<div style="background:#d4edda;color:#155724;padding:1em;border-radius:4px;margin-bottom:1em;">Thank you for contacting us! Your message was submitted successfully.</div>';
+            } else if (params.get('error')) {
+                document.getElementById('status-message').innerHTML = `<div style="background:#f8d7da;color:#721c24;padding:1em;border-radius:4px;margin-bottom:1em;">Error: ${decodeURIComponent(params.get('error'))}</div>`;
+            }
+    </script>
 </body>
 </html>
